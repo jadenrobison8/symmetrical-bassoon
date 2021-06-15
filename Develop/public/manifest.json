@@ -1,0 +1,11 @@
+{
+   "icons": [
+
+   ],
+   "name": "Budget Tracker",
+   "short_name": "Budget",
+   "theme_color": "",
+   "background_color": "",
+   "start_url": "../index.html",
+   "display": "standalone"
+}
