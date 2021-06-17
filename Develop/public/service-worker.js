@@ -20,28 +20,27 @@ self.addEventListener('install', function(e) {
          console.log('installing cache : ' + CACHE_NAME)
          return cache.addAll(FILES_TO_CACHE)
       })
-   )
-})
-
-self.addEventListener('activate', function (e) {
-   e.waitUntil(
-      caches.keys().then(function (keyList) {
-         let cacheKeepList = keyList.filter(function (key) {
-            return key.indexOf(APP_PREFIX);
-         });
-         cacheKeepList.push(CACHE_NAME);
-
-         return Promise.all(
-            keyList.map(function(key, i) {
-               if (cacheKeepList.indexOf(key) === -1) {
-                  console.log('deleting cache : ' + keyList[i]);
-                  return caches.delete(keyList[i]);
-               }
-            })
-         );
-      })
    );
+
+   self.skipWaiting();
 });
+
+self.addEventListener("activate", function(e) {
+   // remove old caches
+   e.waitUntil(
+     caches.keys().then((keyList) => {
+       return Promise.all(
+         keyList.map((key) => {
+           if (key !== CACHE_NAME) {
+             return caches.delete(key);
+           }
+         })
+       );
+     })
+   );
+ 
+   self.clients.claim();
+ });
 
 self.addEventListener("fetch", function(e) {
    // cache successful GET requests to the API
