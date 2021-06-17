@@ -1,6 +1,9 @@
 const indexedDB = 
    window.indexedDB || 
-   ;
+   window.mozIndexedDB || 
+   window.webkitIndexedDB ||
+   window.msIndexedDB || 
+   window.shimIndexedDB;
 
 let db;
 const request = indexedDB.open("budget", 1);
@@ -17,5 +20,42 @@ request.onerror = (err) => {
 };
 
 request.onsuccess = (event) => {
+   db = event.target.result;
 
+   if(navigator.online) {
+      checkDatabase();
+   }
 };
+
+//function to be called in index.js
+function saveRecord(record) {
+   const transaction = db.transaction("pending", "readwrite");
+   const store = transaction.objectStore("pending");
+   store.add(record);
+};
+
+//called when user is online
+function checkDatabase() {
+   const transaction = db.transaction("pending", "readonly");
+   const store = transaction.objectStore("pending");
+   const getAll = store.getAll();
+
+   getAll.onsuccess = () => {
+      if(getAll.result.length > 0) {
+         fetch("/api/transaction/bulk", {
+            method: "POST",
+            body: JSON.stringify(getAll.result),
+            headers: {
+               Accept: "application/json, text/plain, */*",
+               "Content-Type": "application/json"
+            }
+         })
+            .then((response) => response.json())
+            .then(() => {
+               const transaction = db.transaction("pending", "readwrite");
+               const store = transaction.objectStore("pending");
+               store.clear();
+            });
+      }
+   };
+}
